@@ -12,11 +12,11 @@ Portafolio bilingüe construido a partir de https://alexillort.framer.website/ y
 
 ## Páginas y contenido
 
-- `/`: introducción centrada con retrato, nombre con zoom al hacer scroll, áreas con texto desplazable, biografía, disciplinas, selección Work, carrusel de exploraciones, video IEEE VR 2022, publicaciones y footer «love».
+- `/`: introducción centrada con retrato, nombre con zoom al hacer scroll, áreas con texto desplazable, biografía, disciplinas, sección de 19 herramientas del Framer original, selección Work, carrusel de exploraciones, invitación a Research y footer «love».
 - `/work`: ocho proyectos conservados del portafolio original, tarjetas que se apilan al hacer scroll, portadas que se estiran y amplían con el scroll, filtros, fichas y congresos.
 - `/about`: biografía, áreas animadas, tarjetas visuales de disciplinas y carrusel de exploraciones.
 - `/contact`: títulos móviles y enlaces de contacto.
-- `/research`: publicaciones de Google Scholar con búsqueda y filtro por año.
+- `/research`: publicaciones de Google Scholar con búsqueda y filtro por año; al final, video IEEE VR 2022.
 - `?lang=es` y `?lang=en`: idioma renderizado desde el servidor; la preferencia se conserva en el navegador.
 - `lib/content.ts`: datos de contacto y selección editorial. Solo los proyectos de esta lista aparecen públicamente. Añadir un proyecto requiere incluirlo aquí con su URL real de Behance. El feed no publica toda la cuenta.
 
@@ -47,3 +47,9 @@ El identificador del Site está en `.openai/hosting.json`. Mantener la audiencia
 ## Exploraciones visuales
 
 Seis imágenes originales generadas con IA en `public/images/exploration/` cubren Gen AI, VR/AR/XR, vibe coding, UX/UI, datos, investigación, efectos visuales y modelado 3D. Son ilustraciones temáticas, no casos de clientes. Los prompts están en `docs/exploration-image-prompts.md`. El carrusel avanza cada 4,5 segundos mientras está visible; se pausa al enfocar, pasar el cursor, arrastrar, usar controles, ocultar la pestaña, desactivar movimiento o solicitar movimiento reducido. Permite navegación manual y sus enlaces llevan a Work.
+
+## Movimiento de las portadas
+
+`app/surface-motion.tsx` dibuja las portadas por franjas horizontales en Canvas 2D. La expansión varía según la altura en la pantalla y la velocidad de scroll: el contorno y los píxeles se deforman juntos y recuperan su forma al detenerse. Se conserva el apilado de Work. El efecto se aplica a la selección del inicio y a Work; utiliza una imagen HTML accesible como respaldo y se desactiva con movimiento reducido o la pausa global. Lusion Featured Work y Projects se revisaron como referencia; la implementación es propia y no usa sus recursos, mapas de profundidad ni código.
+
+Los logotipos de `public/images/tools/` se recuperaron del portafolio original del usuario. Las publicaciones detalladas y el video aparecen exclusivamente en Research; el inicio presenta solo el título, texto y enlace a publicaciones.

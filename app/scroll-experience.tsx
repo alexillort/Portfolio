@@ -26,17 +26,8 @@ export function ScrollAreas({lang,paused}:{lang:Lang;paused:boolean}){
  const rows=lang==='es'?['Producto y diseño digital · Arte 3D','Ilustración · No code · Arte generativo','Sistemas inmersivos · Diseño UX/UI']:['Product & digital design · 3D art','Illustration · No code · Art generation','Immersive systems · UX/UI design'];
  return <section ref={container} className="scroll-areas" id="areas" aria-label={lang==='es'?'Mis áreas creativas':'My creative fields'}><span className="eyebrow">{lang==='es'?'DISTINTAS MIRADAS. UNA MISMA CURIOSIDAD.':'DIFFERENT PERSPECTIVES. THE SAME CURIOSITY.'}</span>{rows.map((text,i)=><div className={'area-line area-line-'+i} key={text}><div className="area-track"><span className="area-repeat" aria-hidden="true">{text} ✦</span><h2>{text}</h2><span className="area-repeat" aria-hidden="true">✦ {text}</span></div><span className="area-pointer" aria-hidden="true"><svg viewBox="0 0 20 24"><path d="M1 1L17 12 9 14 6 22Z"/></svg><i/></span></div>)}</section>;
 }
-export function ScrollMotion({paused,revision}:{paused:boolean;revision:string}){
- useEffect(()=>{
-  const cards=[...document.querySelectorAll<HTMLElement>('.project-card,.discipline-card')];
-  if(paused||matchMedia('(prefers-reduced-motion:reduce)').matches){cards.forEach(c=>{c.style.removeProperty('--card-scale');c.style.removeProperty('--image-zoom');c.style.removeProperty('--image-shift');c.style.removeProperty('--image-stretch');c.style.removeProperty('--media-width');c.style.removeProperty('--media-height');});return;}
-  let frame=0,lastY=scrollY,speed=0;const visible=new Set<HTMLElement>();
-  const draw=()=>{frame=0;speed=speed*.78+Math.max(-2,Math.min(2,(scrollY-lastY)/90))*.22;lastY=scrollY;visible.forEach(card=>{const r=card.getBoundingClientRect();const p=Math.max(-1,Math.min(1,(r.top+r.height*.5-innerHeight*.5)/(innerHeight*.8)));card.style.setProperty('--card-scale',String(1-Math.abs(p)*.065));card.style.setProperty('--image-zoom',String(1.04+Math.abs(p)*.19));card.style.setProperty('--image-shift',`${-p*35}px`);card.style.setProperty('--image-stretch',String(1+Math.abs(p)*.11+Math.min(.17,Math.abs(speed)*.14)));card.style.setProperty('--media-width',String(1-Math.abs(p)*.065));card.style.setProperty('--media-height',String(1-Math.abs(p)*.13));});if(Math.abs(speed)>.001)frame=requestAnimationFrame(draw);};
-  const request=()=>{if(!frame)frame=requestAnimationFrame(draw);};const io=new IntersectionObserver(entries=>{entries.forEach(e=>e.isIntersecting?visible.add(e.target as HTMLElement):visible.delete(e.target as HTMLElement));request();},{rootMargin:'200px'});cards.forEach(c=>io.observe(c));addEventListener('scroll',request,{passive:true});addEventListener('resize',request);request();return()=>{cancelAnimationFrame(frame);io.disconnect();removeEventListener('scroll',request);removeEventListener('resize',request);};
- },[paused,revision]);return null;
-}
 export function ScrollMedia({src,fallbackSrc,alt}:{src:string;fallbackSrc?:string;alt:string}){
- return <div className="scroll-media"><img src={src} alt={alt} loading="lazy" onError={e=>{if(fallbackSrc&&e.currentTarget.getAttribute('src')!==fallbackSrc)e.currentTarget.src=fallbackSrc;}}/></div>;
+ return <div className="scroll-media"><canvas aria-hidden="true"/><img src={src} alt={alt} loading="lazy" onError={e=>{if(fallbackSrc&&e.currentTarget.getAttribute('src')!==fallbackSrc)e.currentTarget.src=fallbackSrc;}}/></div>;
 }
 export function Exploration({lang,paused}:{lang:Lang;paused:boolean}){
  const es=lang==='es';
