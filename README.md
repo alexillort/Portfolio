@@ -12,9 +12,9 @@ Portafolio bilingüe construido a partir de https://alexillort.framer.website/ y
 
 ## Páginas y contenido
 
-- `/`: introducción, escultura WebGL, selección Work, biografía, disciplinas, video IEEE VR 2022, publicaciones y footer «love».
-- `/work`: ocho proyectos conservados del portafolio original, tarjetas que se apilan al hacer scroll, portadas con curvatura WebGL, filtros, fichas y congresos.
-- `/about`: biografía, tarjetas visuales de disciplinas y capturas del portafolio original.
+- `/`: introducción centrada con retrato, nombre con zoom al hacer scroll, áreas con texto desplazable, biografía, disciplinas, selección Work, carrusel de exploraciones, video IEEE VR 2022, publicaciones y footer «love».
+- `/work`: ocho proyectos conservados del portafolio original, tarjetas que se apilan al hacer scroll, portadas que se estiran y amplían con el scroll, filtros, fichas y congresos.
+- `/about`: biografía, áreas animadas, tarjetas visuales de disciplinas y carrusel de exploraciones.
 - `/contact`: títulos móviles y enlaces de contacto.
 - `/research`: publicaciones de Google Scholar con búsqueda y filtro por año.
 - `?lang=es` y `?lang=en`: idioma renderizado desde el servidor; la preferencia se conserva en el navegador.
@@ -32,9 +32,9 @@ Validación local: Scholar respondió con 14 registros. Behance RSS fue leído d
 
 ## Identidad y medios
 
-Marca: `.ART` (no es una compra ni conexión de dominio). Retrato y portadas proceden del sitio original. La única tipografía es DM Sans, servida localmente en pesos 400, 500, 700 y 900. Las cuatro capturas de Framer fueron suministradas por el usuario. Hay una entrada de saludos, transiciones de cortina entre páginas, nombre y títulos móviles, cursor circular amarillo y barras de vidrio. El menú conserva navegación por teclado y cierre con Escape. La escultura se genera en WebGL, sin descargar modelos ni imágenes ajenos. Respeta reducción de movimiento y ofrece pausa manual. El video conserva el enlace usado en Work: «3DUI Contest Fast Forward | IEEE VR 2022», publicado por IEEE Virtual Reality Conference.
+Marca: `.ART` (no es una compra ni conexión de dominio). Retrato y portadas proceden del sitio original. La única tipografía es DM Sans, servida localmente en pesos 400, 500, 700 y 900. Hay un saludo solo en la primera entrada de la sesión y transiciones transparentes de vidrio desenfocado entre páginas. El nombre y las portadas reaccionan al scroll; los botones usan vidrio y las portadas completas se desenfocan al pasar el cursor o recibir foco. Se conserva el cursor circular amarillo. La marca tiene un punto centrado de aproximadamente la mitad de la altura visual de ART. El menú conserva navegación por teclado y cierre con Escape. Respeta reducción de movimiento y ofrece pausa manual. El video conserva el enlace usado en Work: «3DUI Contest Fast Forward | IEEE VR 2022», publicado por IEEE Virtual Reality Conference.
 
-Referencias de diseño, separadas del código de la web en `../research/references`: Dennis Snellenberg (entrada y transiciones), Lusion (medios curvos y botones), Luzia (tarjetas visuales redondeadas), Athos (apilado al scroll), Bruno Arizio y Bruno Simon. Sus snapshots HTML son material de consulta local y no se empaquetan ni se reutilizan como código de producción.
+Referencias de diseño, separadas del código de la web en `../research/references`: Dennis Snellenberg (entrada y transiciones), Lusion (estiramiento y escala de medios al hacer scroll, y botones), Luzia (tarjetas visuales redondeadas), Athos (apilado al scroll), Bruno Arizio y Bruno Simon. Sus snapshots HTML son material de consulta local y no se empaquetan ni se reutilizan como código de producción.
 
 ## Congresos
 
@@ -43,3 +43,7 @@ Se conservan JIHCI 2025, 2024, 2023 y 2021 del archivo original. Se añade Colom
 ## Publicación
 
 El identificador del Site está en `.openai/hosting.json`. Mantener la audiencia privada inicial. La publicación no sustituye el sitio existente en Framer. Usar el flujo del plugin Sites para compilar, sincronizar fuente, empaquetar y publicar.
+
+## Exploraciones visuales
+
+Seis imágenes originales generadas con IA en `public/images/exploration/` cubren Gen AI, VR/AR/XR, vibe coding, UX/UI, datos, investigación, efectos visuales y modelado 3D. Son ilustraciones temáticas, no casos de clientes. Los prompts están en `docs/exploration-image-prompts.md`. El carrusel avanza cada 4,5 segundos mientras está visible; se pausa al enfocar, pasar el cursor, arrastrar, usar controles, ocultar la pestaña, desactivar movimiento o solicitar movimiento reducido. Permite navegación manual y sus enlaces llevan a Work.
