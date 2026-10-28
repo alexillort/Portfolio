@@ -12,7 +12,7 @@ Portafolio bilingüe construido a partir de https://alexillort.framer.website/ y
 
 ## Páginas y contenido
 
-- `/`: introducción centrada con retrato, nombre con zoom al hacer scroll, áreas con texto desplazable, biografía, disciplinas, sección de 19 herramientas del Framer original, selección Work, carrusel de exploraciones, invitación a Research y footer «love».
+- `/`: introducción centrada con retrato, nombre con zoom al hacer scroll, áreas con texto desplazable, biografía, disciplinas, carrusel continuo de 51 herramientas, selección Work, carrusel de exploraciones, invitación a Research y footer «love».
 - `/work`: ocho proyectos conservados del portafolio original, tarjetas que se apilan al hacer scroll, portadas que se estiran y amplían con el scroll, filtros, fichas y congresos.
 - `/about`: biografía, áreas animadas, tarjetas visuales de disciplinas y carrusel de exploraciones.
 - `/contact`: títulos móviles y enlaces de contacto.
@@ -52,4 +52,14 @@ Seis imágenes originales generadas con IA en `public/images/exploration/` cubre
 
 `app/surface-motion.tsx` dibuja las portadas por franjas horizontales en Canvas 2D. La expansión varía según la altura en la pantalla y la velocidad de scroll: el contorno y los píxeles se deforman juntos y recuperan su forma al detenerse. Se conserva el apilado de Work. El efecto se aplica a la selección del inicio y a Work; utiliza una imagen HTML accesible como respaldo y se desactiva con movimiento reducido o la pausa global. Lusion Featured Work y Projects se revisaron como referencia; la implementación es propia y no usa sus recursos, mapas de profundidad ni código.
 
-Los logotipos de `public/images/tools/` se recuperaron del portafolio original del usuario. Las publicaciones detalladas y el video aparecen exclusivamente en Research; el inicio presenta solo el título, texto y enlace a publicaciones.
+Los logotipos iniciales de `public/images/tools/` se recuperaron del portafolio original del usuario; las ampliaciones y sus fuentes se detallan abajo. Las publicaciones detalladas y el video aparecen exclusivamente en Research; el inicio presenta solo el título, texto y enlace a publicaciones.
+
+### Expanded stack and entrance motion
+
+The toolbox now has 51 named tools in four alternating, seamless logo ribbons. Only the icon and name are shown; duplicated belts are hidden from assistive technology. Each row pauses on hover. The local pause control, keyboard focus, global motion switch and reduced-motion preference provide manually scrollable lists. Offscreen or hidden-page ribbons stop animating.
+
+EntranceMotion progressively reveals headings, copy and media once when they enter the viewport, waits for the opening greeting or glass transition, and leaves content visible without JavaScript or with reduced motion. New filtered content is discovered automatically.
+
+The project image warp is now capped at 0.07 (previously 0.23), with a smaller opening reveal. The scroll character remains, with much less deformation.
+
+Additional local tool icons come from [Devicon](https://github.com/devicons/devicon), [Lobe Icons](https://github.com/lobehub/lobe-icons) and [Simple Icons](https://github.com/simple-icons/simple-icons) (Microsoft, Power BI and Tableau from release 11.15.0). Their license texts are included in public/images/tools/. Jitter and CapCut use their public site icons; Gamma uses its public favicon via Google's favicon service. The Google icon also identifies Google Workspace. Generic AI agents and code use Lucide symbols. Existing icons from the original portfolio are retained.

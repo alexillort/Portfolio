@@ -19,7 +19,7 @@ export function SurfaceMotion({paused,revision}:{paused:boolean;revision:string}
    frame=0;if(stopped||document.hidden)return;
    const dt=clamp(time-lastTime,8,60),delta=scrollY-lastY;lastTime=time;lastY=scrollY;
    energy=Math.max(Math.abs(delta)*16.67/dt,energy*Math.pow(.91,dt/16.67));
-   const ripple=disabled()?0:Math.min(.23,energy*.008);
+   const ripple=disabled()?0:Math.min(.07,energy*.0026);
    let animating=false;
    surfaces.forEach(s=>{
     if(!s.active)return;
@@ -28,13 +28,13 @@ export function SurfaceMotion({paused,revision}:{paused:boolean;revision:string}
     if(w<1||h<1||!s.image.complete||!s.image.naturalWidth)return;
     if(rect.top>innerHeight+80||rect.bottom< -80)return;
     if(!s.started)s.started=time;
-    const age=clamp((time-s.started)/1050,0,1),reveal=1-Math.pow(1-age,4);
+    const age=clamp((time-s.started)/900,0,1),reveal=1-Math.pow(1-age,4);
     if(age<1)animating=true;
     const dpr=Math.min(devicePixelRatio||1,1.5),margin=w*.24,cw=w+margin*2;
     if(s.lastWidth!==w||s.lastHeight!==h){s.canvas.width=Math.ceil(cw*dpr);s.canvas.height=Math.ceil(h*dpr);s.canvas.style.width=`${cw}px`;s.canvas.style.height=`${h}px`;s.canvas.style.left=`${-margin}px`;s.lastWidth=w;s.lastHeight=h;}
     const {ctx}=s;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,cw,h);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
-    const opening=.76+reveal*.24,drawW=w*opening,drawH=h*opening,offsetX=(w-drawW)/2,offsetY=(h-drawH)/2;
-    const iw=s.image.naturalWidth,ih=s.image.naturalHeight,zoom=1.025+(1-reveal)*.08;
+    const opening=.91+reveal*.09,drawW=w*opening,drawH=h*opening,offsetX=(w-drawW)/2,offsetY=(h-drawH)/2;
+    const iw=s.image.naturalWidth,ih=s.image.naturalHeight,zoom=1.015+(1-reveal)*.035;
     const cover=Math.max(w/iw,h/ih)*zoom,sourceW=w/cover,sourceH=h/cover;
     const sourceX=(iw-sourceW)/2,sourceY=(ih-sourceH)/2;
     const radius=Math.min(18,drawH*.08),step=1/dpr;
