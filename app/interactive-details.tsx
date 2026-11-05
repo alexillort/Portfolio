@@ -1,72 +1,9 @@
 'use client';
 import {useEffect,useRef} from 'react';
 
-// One small WebGL lens; the photo remains available when motion or WebGL is off.
-export function PortraitSphere({paused}:{paused:boolean}){
- const root=useRef<HTMLDivElement>(null),canvas=useRef<HTMLCanvasElement>(null);
- useEffect(()=>{
-  const el=root.current,c=canvas.current;if(!el||!c)return;
-  const motion=matchMedia('(prefers-reduced-motion:reduce)');
-  let dispose=()=>{};
-  const setup=()=>{
-   dispose();el.classList.remove('sphere-ready');if(paused||motion.matches)return;
-   const gl=c.getContext('webgl',{alpha:true,antialias:true,premultipliedAlpha:false});if(!gl)return;
-   const shaders:WebGLShader[]=[];
-   const shader=(kind:number,source:string)=>{const s=gl.createShader(kind);if(!s)return null;gl.shaderSource(s,source);gl.compileShader(s);shaders.push(s);return gl.getShaderParameter(s,gl.COMPILE_STATUS)?s:null;};
-   const vs=shader(gl.VERTEX_SHADER,'attribute vec2 position; varying vec2 uv; void main(){uv=position*.5+.5;gl_Position=vec4(position,0.,1.);}');
-   const fs=shader(gl.FRAGMENT_SHADER,`
-    precision mediump float;
-    varying vec2 uv;
-    uniform sampler2D photo;
-    uniform vec2 pointer;
-    uniform vec2 crop;
-    uniform float time;
-    void main(){
-     vec2 p=(uv-.5)*2.;float r=length(p);if(r>1.)discard;
-     float z=sqrt(max(0.,1.-r*r));vec3 normal=vec3(p,z);
-     // Compression grows towards the edge, like an image inside a glass sphere.
-     vec2 lens=p*(.65+.35*z);
-     vec2 st=.5+(lens*.5+pointer*.035*z)*crop;
-     vec3 color=texture2D(photo,st).rgb;
-     float fresnel=pow(1.-z,2.5);
-     vec3 sheen=.55+.45*cos(vec3(0.,2.,4.)+atan(p.y,p.x)*1.6+time*.18);
-     color=mix(color,sheen,fresnel*.65);
-     vec3 light=normalize(vec3(-.5+pointer.x*.3,.65+pointer.y*.3,1.1));
-     float highlight=pow(max(dot(normal,light),0.),55.);
-     color+=vec3(.8,.92,1.)*highlight*.55;
-     color+=vec3(.5,.72,1.)*pow(max(dot(normal,normalize(vec3(.7,-.6,.2))),0.),28.)*.5;
-     color*=.88+.12*z;
-     float edge=smoothstep(.94,.985,r)*(1.-smoothstep(.99,1.,r));
-     color+=sheen*edge*.35;
-     gl_FragColor=vec4(color,1.-smoothstep(.994,1.,r));
-    }`);
-   const program=gl.createProgram();if(!program||!vs||!fs){shaders.forEach(s=>gl.deleteShader(s));return;}
-   gl.attachShader(program,vs);gl.attachShader(program,fs);gl.linkProgram(program);
-   if(!gl.getProgramParameter(program,gl.LINK_STATUS)){shaders.forEach(s=>gl.deleteShader(s));gl.deleteProgram(program);return;}
-   gl.useProgram(program);const buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
-   const position=gl.getAttribLocation(program,'position');gl.enableVertexAttribArray(position);gl.vertexAttribPointer(position,2,gl.FLOAT,false,0,0);
-   const texture=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,texture);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
-   const pointer=gl.getUniformLocation(program,'pointer'),time=gl.getUniformLocation(program,'time'),crop=gl.getUniformLocation(program,'crop');
-   let frame=0,active=false,loaded=false,closed=false,last=0,x=0,y=0,tx=0,ty=0;
-   const draw=(now:number)=>{
-    frame=0;if(closed||!active||document.hidden||!loaded)return;
-    if(now-last>30){last=now;x+=(tx-x)*.1;y+=(ty-y)*.1;gl.uniform2f(pointer,x,y);gl.uniform1f(time,now/1000);gl.drawArrays(gl.TRIANGLES,0,6);el.style.setProperty('--lens-x',`${x*7}px`);el.style.setProperty('--lens-y',`${-y*7}px`);}
-    frame=requestAnimationFrame(draw);
-   };
-   const request=()=>{if(!frame&&!closed)frame=requestAnimationFrame(draw);};
-   const resize=()=>{const size=Math.round(el.clientWidth*.76*Math.min(devicePixelRatio,2));c.width=size;c.height=size;gl.viewport(0,0,size,size);request();};
-   const image=new Image();image.onload=()=>{if(closed)return;gl.bindTexture(gl.TEXTURE_2D,texture);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,image);const aspect=image.naturalWidth/image.naturalHeight;gl.uniform2f(crop,Math.min(1,1/aspect),Math.min(1,aspect));loaded=true;resize();el.classList.add('sphere-ready');request();};image.src='/images/portrait.jpg';
-   const move=(e:PointerEvent)=>{const r=el.getBoundingClientRect();tx=Math.max(-1,Math.min(1,(e.clientX-r.left)/r.width*2-1));ty=Math.max(-1,Math.min(1,1-(e.clientY-r.top)/r.height*2));request();};
-   const leave=()=>{tx=0;ty=0;};
-   const observer=new IntersectionObserver(([entry])=>{active=entry.isIntersecting;request();});observer.observe(el);
-   const sizes=new ResizeObserver(resize);sizes.observe(el);
-   const lost=(event:Event)=>{event.preventDefault();el.classList.remove('sphere-ready');loaded=false;cancelAnimationFrame(frame);frame=0;};
-   el.addEventListener('pointermove',move);el.addEventListener('pointerleave',leave);document.addEventListener('visibilitychange',request);c.addEventListener('webglcontextlost',lost);
-   dispose=()=>{closed=true;cancelAnimationFrame(frame);observer.disconnect();sizes.disconnect();el.removeEventListener('pointermove',move);el.removeEventListener('pointerleave',leave);document.removeEventListener('visibilitychange',request);c.removeEventListener('webglcontextlost',lost);image.onload=null;gl.deleteBuffer(buffer);gl.deleteTexture(texture);gl.deleteProgram(program);shaders.forEach(s=>gl.deleteShader(s));el.classList.remove('sphere-ready');el.style.removeProperty('--lens-x');el.style.removeProperty('--lens-y');};
-  };
-  setup();motion.addEventListener('change',setup);return()=>{dispose();motion.removeEventListener('change',setup);};
- },[paused]);
- return <div ref={root} className="portrait-orbit portrait-sphere"><svg viewBox="0 0 240 240" aria-hidden="true"><defs><path id="portrait-circle" d="M120,120 m-107,0 a107,107 0 1,1 214,0 a107,107 0 1,1 -214,0"/></defs><text><textPath href="#portrait-circle" textLength="671">VR / AR / XR CREATOR ✦ ENGINEER ✦ UX / UI DESIGNER ✦ </textPath></text></svg><div className="portrait-lens"><img src="/images/portrait.jpg" alt="Alexander Rozo Torres" fetchPriority="high"/><canvas ref={canvas} aria-hidden="true"/><span className="lens-glint" aria-hidden="true"/></div></div>;
+// The portrait stays photographic; glass belongs to the scroll transition only.
+export function IntroPortrait(){
+ return <div className="portrait-orbit intro-portrait"><svg viewBox="0 0 240 240" aria-hidden="true"><defs><path id="portrait-circle" d="M120,120 m-107,0 a107,107 0 1,1 214,0 a107,107 0 1,1 -214,0"/></defs><text><textPath href="#portrait-circle" textLength="671">VR / AR / XR CREATOR ✦ ENGINEER ✦ UX / UI DESIGNER ✦ </textPath></text></svg><img src="/images/portrait.jpg" alt="Alexander Rozo Torres" fetchPriority="high"/></div>;
 }
 
 export function InteractiveAreas({lang,paused}:{lang:'es'|'en';paused:boolean}){
@@ -96,7 +33,7 @@ export function InteractiveAreas({lang,paused}:{lang:'es'|'en';paused:boolean}){
      const tx=s.hover?s.px:Math.sin(now/1900+s.i*1.8)*Math.min(innerWidth*.17,200),ty=s.hover?s.py:Math.cos(now/1500+s.i)*12;
      s.x+=(tx-s.x)*.12;s.y+=(ty-s.y)*.12;s.line.style.setProperty('--pointer-x',`${s.x}px`);s.line.style.setProperty('--pointer-y',`${s.y}px`);
      const cx=box.left+box.width*.5+s.x,cy=box.bottom-16+s.y;
-     s.words.forEach(word=>{const b=word.getBoundingClientRect();const dx=Math.max(b.left-cx,0,cx-b.right),dy=b.top+b.height*.5-cy;const influence=Math.max(0,1-Math.hypot(dx,dy)/160);word.style.transform=`translateY(${-influence*9}px) scale(${1+influence*.035})`;word.style.color=influence>.55?'var(--area-ink)':'';});
+     s.words.forEach(word=>{const b=word.getBoundingClientRect();const dx=Math.max(b.left-cx,0,cx-b.right),dy=b.top+b.height*.5-cy;const influence=Math.max(0,1-Math.hypot(dx,dy)/160);word.style.transform=`translateY(${-influence*9}px) scale(${1+influence*.035})`;});
     });
    }
    frame=requestAnimationFrame(draw);
@@ -132,6 +69,7 @@ export function LiquidCursor({paused,dialogOpen}:{paused:boolean;dialogOpen:bool
   };
   const move=(e:PointerEvent)=>{
    if(!enabled()||e.pointerType==='touch')return;
+   if((e.target as Element).closest('.project-visual')?.closest('.project-card')){show=false;el.style.opacity='0';tail.style.opacity='0';return;}
    const target=(e.target as Element).closest<HTMLElement>('a,button');let rect=target?.getBoundingClientRect();
    if(rect&&(rect.width>350||rect.height>90)){const pill=target?.querySelector<HTMLElement>('.project-view,.media-glass-arrow');rect=pill?.getBoundingClientRect();}
    attached=!!rect&&rect.width<=350&&rect.height<=90;
@@ -144,4 +82,34 @@ export function LiquidCursor({paused,dialogOpen}:{paused:boolean;dialogOpen:bool
   return()=>{cancelAnimationFrame(frame);document.documentElement.classList.remove('liquid-cursor-enabled');media.removeEventListener('change',sync);document.removeEventListener('pointermove',move);document.removeEventListener('pointerleave',leave);document.removeEventListener('scroll',leave);};
  },[paused,dialogOpen]);
  return <><span ref={trail} className="liquid-cursor-trail" aria-hidden="true"/><div ref={body} className="custom-cursor liquid-cursor" aria-hidden="true"/></>;
+}
+
+// The pill is a pointer follower on desktop and stays centred for keyboard/touch.
+export function ProjectHoverActions({paused,revision}:{paused:boolean;revision:string}){
+ useEffect(()=>{
+  const media=matchMedia('(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference)');
+  const states=Array.from(document.querySelectorAll<HTMLElement>('.project-card')).flatMap(card=>{
+   const visual=card.querySelector<HTMLElement>('.project-visual'),pill=card.querySelector<HTMLElement>('.project-view');
+   return visual&&pill?[{card,visual,pill,x:0,y:0,tx:0,ty:0,frame:0,active:false}]:[];
+  });
+  const cleanups=states.map(s=>{
+   const reset=()=>{s.active=false;cancelAnimationFrame(s.frame);s.frame=0;s.visual.style.removeProperty('--project-cta-x');s.visual.style.removeProperty('--project-cta-y');};
+   const draw=()=>{
+    s.frame=0;if(!s.active)return;
+    s.x+=(s.tx-s.x)*.24;s.y+=(s.ty-s.y)*.24;
+    s.visual.style.setProperty('--project-cta-x',`${s.x}px`);s.visual.style.setProperty('--project-cta-y',`${s.y}px`);
+    if(Math.abs(s.tx-s.x)+Math.abs(s.ty-s.y)>.2)s.frame=requestAnimationFrame(draw);
+   };
+   const move=(e:PointerEvent)=>{
+    if(paused||!media.matches||e.pointerType==='touch')return;
+    const r=s.visual.getBoundingClientRect(),mx=Math.min(r.width/2,s.pill.offsetWidth/2+14),my=Math.min(r.height/2,s.pill.offsetHeight/2+14);
+    s.tx=Math.max(mx,Math.min(r.width-mx,e.clientX-r.left));s.ty=Math.max(my,Math.min(r.height-my,e.clientY-r.top));
+    if(!s.active){s.x=s.tx;s.y=s.ty;s.active=true;}if(!s.frame)s.frame=requestAnimationFrame(draw);
+   };
+   const focus=()=>{if(s.card.matches(':focus-visible'))reset();};
+   s.visual.addEventListener('pointermove',move);s.card.addEventListener('pointerleave',reset);s.card.addEventListener('focus',focus);media.addEventListener('change',reset);
+   return()=>{reset();s.visual.removeEventListener('pointermove',move);s.card.removeEventListener('pointerleave',reset);s.card.removeEventListener('focus',focus);media.removeEventListener('change',reset);};
+  });
+  return()=>cleanups.forEach(cleanup=>cleanup());
+ },[paused,revision]);return null;
 }

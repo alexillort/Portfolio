@@ -2,18 +2,19 @@
 import {useEffect,useRef,useState} from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import {ArrowDown,ArrowUpRight,ArrowLeft,ArrowRight,Pause,Play} from 'lucide-react';
-import {PortraitSphere,InteractiveAreas} from './interactive-details';
+import {IntroPortrait,InteractiveAreas} from './interactive-details';
+import {IntroScrollGlass} from './scroll-glass';
 type Lang='es'|'en';
 export function CenteredIntro({lang,paused}:{lang:Lang;paused:boolean}){
  const es=lang==='es';const intro=useRef<HTMLElement>(null);
  useEffect(()=>{
   const el=intro.current;if(!el)return;
-  if(paused||matchMedia('(prefers-reduced-motion:reduce)').matches){el.style.setProperty('--name-scale','1');el.style.setProperty('--name-y','0px');el.style.setProperty('--sphere-scale','1');return;}
+  if(paused||matchMedia('(prefers-reduced-motion:reduce)').matches){el.style.setProperty('--name-scale','1');el.style.setProperty('--name-y','0px');return;}
   let frame=0;
-  const draw=()=>{frame=0;const r=el.getBoundingClientRect();const p=Math.max(0,Math.min(1,-r.top/r.height));el.style.setProperty('--name-scale',String(1+p*1.7));el.style.setProperty('--name-y',`${p*80}px`);el.style.setProperty('--sphere-scale',String(1+p*.6));};
+  const draw=()=>{frame=0;const r=el.getBoundingClientRect();const p=Math.max(0,Math.min(1,-r.top/r.height));el.style.setProperty('--name-scale',String(1+p*1.7));el.style.setProperty('--name-y',`${p*80}px`);};
   const request=()=>{if(!frame)frame=requestAnimationFrame(draw);};addEventListener('scroll',request,{passive:true});addEventListener('resize',request);request();return()=>{removeEventListener('scroll',request);removeEventListener('resize',request);cancelAnimationFrame(frame);};
  },[paused]);
- return <section ref={intro} className="centered-intro" id="intro"><div className="portrait-aura" aria-hidden="true"/><div className="intro-center"><h1>{es?'Hola, soy Alex.':"Hi, I’m Alex."}</h1><PortraitSphere paused={paused}/><div className="intro-availability"><span><i/>{es?'Disponible para colaborar':'Available for work'}</span><span><i/>{es?'Oportunidades remotas':'Remote opportunities'}</span></div></div><div className="intro-name" aria-label="Alex Rozo">ALEX <strong>ROZO</strong><span aria-hidden="true">✳</span></div><div className="intro-foot"><span>{es?'DISEÑO · TECNOLOGÍA · CURIOSIDAD':'DESIGN · TECHNOLOGY · CURIOSITY'}</span><a href="#areas">{es?'SIGUE EXPLORANDO':'KEEP EXPLORING'}<ArrowDown size={16}/></a></div></section>;
+ return <><IntroScrollGlass paused={paused}/><section ref={intro} className="centered-intro" id="intro"><div className="portrait-aura" aria-hidden="true"/><div className="intro-center"><h1>{es?'Hola, soy Alex.':"Hi, I’m Alex."}</h1><IntroPortrait/><div className="intro-availability"><span><i/>{es?'Disponible para colaborar':'Available for work'}</span><span><i/>{es?'Oportunidades remotas':'Remote opportunities'}</span></div></div><div className="intro-name" aria-label="Alex Rozo">ALEX <strong>ROZO</strong><span aria-hidden="true">✳</span></div><div className="intro-foot"><span>{es?'DISEÑO · TECNOLOGÍA · CURIOSIDAD':'DESIGN · TECHNOLOGY · CURIOSITY'}</span><a href="#areas">{es?'SIGUE EXPLORANDO':'KEEP EXPLORING'}<ArrowDown size={16}/></a></div></section></>;
 }
 export function ScrollAreas({lang,paused}:{lang:Lang;paused:boolean}){return <InteractiveAreas lang={lang} paused={paused}/>;}
 export function ScrollMedia({src,fallbackSrc,alt}:{src:string;fallbackSrc?:string;alt:string}){
