@@ -32,11 +32,16 @@
 .interactive-areas .area-line-2{--area-ink:#7e36d8;--pointer-color:#8e45f5}
 .interactive-areas .area-line-3{--area-ink:#007b88;--pointer-color:#6ae2e8}
 .interactive-areas .area-line:nth-of-type(even) .area-track{transform:translateX(calc(-50% - var(--area-shift)))}
-.interactive-areas .area-word{display:inline-block;transform-origin:50% 80%;font-weight:400;transition:font-weight .18s;will-change:transform}
+@font-face{font-family:'DM Sans Areas';src:url('/fonts/dm-sans-variable.woff2') format('woff2');font-weight:100 1000;font-style:normal;font-display:swap}
+.interactive-areas .area-track{font-family:'DM Sans Areas','DM Sans',sans-serif;font-optical-sizing:none}
+.interactive-areas .area-word{display:inline-block;font-weight:400}
+.interactive-areas .area-glyph{position:relative;display:inline-block;white-space:pre;font-weight:400}
+.interactive-areas .area-glyph:before{content:attr(data-char);visibility:hidden}
+.interactive-areas .area-glyph-ink{position:absolute;top:0;left:50%;transform:translateX(-50%);font-weight:400;font-synthesis:none}
 .interactive-areas .area-pointer{left:50%;bottom:0;transform:translate(var(--pointer-x,0px),var(--pointer-y,0px)) rotate(-5deg);pointer-events:none;z-index:2}
 .interactive-areas .area-pointer i{background:var(--pointer-color)}
 .interactive-areas .area-track h2,.interactive-areas .area-repeat{font-weight:400;color:var(--ink)}
-@media(hover:hover){.interactive-areas .area-word:hover{font-weight:700}}
+
 /* A droplet stretches into the shape of each small action, keeping its label clear. */
 .custom-cursor.liquid-cursor{position:fixed;top:0;left:0;z-index:1900;pointer-events:none;border-radius:999px;transform-origin:center;transition:background .25s,border-color .25s,opacity .15s;mix-blend-mode:normal;background:#dbff00;border:1px solid transparent;box-shadow:none;will-change:transform,width,height;display:none;opacity:0}
 .custom-cursor.liquid-cursor[data-attached="true"]{background:#dfff0012;border-color:#bedc0070;box-shadow:inset 0 1px 1px #fff9,0 0 0 2px #ffffff20;backdrop-filter:brightness(1.06);-webkit-backdrop-filter:brightness(1.06)}

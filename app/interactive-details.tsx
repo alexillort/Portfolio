@@ -21,10 +21,10 @@ export function InteractiveAreas({lang,paused}:{lang:'es'|'en';paused:boolean}){
  ];
  useEffect(()=>{
   const el=root.current;if(!el)return;
-  const media=matchMedia('(prefers-reduced-motion:reduce)');let frame=0,active=false,last=0;
-  const lines=Array.from(el.querySelectorAll<HTMLElement>('.area-line')).map((line,i)=>({line,i,x:0,y:0,px:0,py:0,hover:false,words:Array.from(line.querySelectorAll<HTMLElement>('.area-word'))}));
+  const media=matchMedia('(prefers-reduced-motion:reduce)'),pointer=matchMedia('(hover:hover) and (pointer:fine)');let frame=0,active=false,last=0;
+  const lines=Array.from(el.querySelectorAll<HTMLElement>('.area-line')).map((line,i)=>({line,i,x:0,y:0,px:0,py:0,hover:false,clientX:0,clientY:0,glyphs:Array.from(line.querySelectorAll<HTMLElement>('.area-glyph')).map(glyph=>({glyph,ink:glyph.querySelector<HTMLElement>('.area-glyph-ink')!,weight:400}))}));
   const disabled=()=>paused||media.matches;
-  const clear=()=>{el.style.setProperty('--area-shift','0px');lines.forEach(({line,words})=>{line.style.removeProperty('--pointer-x');line.style.removeProperty('--pointer-y');words.forEach(word=>{word.style.removeProperty('transform');word.style.removeProperty('color');});});};
+  const clear=()=>{el.style.setProperty('--area-shift','0px');lines.forEach(({line,glyphs})=>{line.style.removeProperty('--pointer-x');line.style.removeProperty('--pointer-y');glyphs.forEach(g=>{g.weight=400;g.ink.style.removeProperty('font-weight');});});};
   const draw=(now:number)=>{
    frame=0;if(disabled()){clear();return;}if(!active||document.hidden)return;
    if(now-last>25){last=now;const r=el.getBoundingClientRect(),progress=(innerHeight*.5-r.top-r.height*.5)/(innerHeight+r.height);el.style.setProperty('--area-shift',`${Math.max(-1,Math.min(1,progress))*Math.min(innerWidth*.48,550)}px`);
@@ -32,23 +32,29 @@ export function InteractiveAreas({lang,paused}:{lang:'es'|'en';paused:boolean}){
      const box=s.line.getBoundingClientRect();if(box.bottom<0||box.top>innerHeight)return;
      const tx=s.hover?s.px:Math.sin(now/1900+s.i*1.8)*Math.min(innerWidth*.17,200),ty=s.hover?s.py:Math.cos(now/1500+s.i)*12;
      s.x+=(tx-s.x)*.12;s.y+=(ty-s.y)*.12;s.line.style.setProperty('--pointer-x',`${s.x}px`);s.line.style.setProperty('--pointer-y',`${s.y}px`);
-     const cx=box.left+box.width*.5+s.x,cy=box.bottom-16+s.y;
-     s.words.forEach(word=>{const b=word.getBoundingClientRect();const dx=Math.max(b.left-cx,0,cx-b.right),dy=b.top+b.height*.5-cy;const influence=Math.max(0,1-Math.hypot(dx,dy)/160);word.style.transform=`translateY(${-influence*9}px) scale(${1+influence*.035})`;});
+     // Measure the fixed regular-width glyphs before changing their ink weight.
+     const targets=s.glyphs.map(g=>{
+      if(!s.hover||!pointer.matches)return 400;
+      const b=g.glyph.getBoundingClientRect(),distance=Math.hypot(b.left+b.width/2-s.clientX,(b.top+b.height/2-s.clientY)*1.35);
+      const proximity=Math.max(0,1-distance/190),influence=proximity*proximity*(3-2*proximity);
+      return 400+500*influence;
+     });
+     s.glyphs.forEach((g,i)=>{g.weight+=(targets[i]-g.weight)*.24;if(Math.abs(targets[i]-g.weight)<.5)g.weight=targets[i];g.ink.style.fontWeight=g.weight.toFixed(1);});
     });
    }
    frame=requestAnimationFrame(draw);
   };
   const request=()=>{if(!frame)frame=requestAnimationFrame(draw);};
   const listeners=lines.map(s=>{
-   const move=(e:PointerEvent)=>{const b=s.line.getBoundingClientRect();s.hover=true;s.px=e.clientX-b.left-b.width*.5;s.py=e.clientY-b.bottom+16;request();};
-   const leave=()=>{s.hover=false;};s.line.addEventListener('pointermove',move);s.line.addEventListener('pointerleave',leave);return()=>{s.line.removeEventListener('pointermove',move);s.line.removeEventListener('pointerleave',leave);};
+   const move=(e:PointerEvent)=>{if(e.pointerType==='touch'||!pointer.matches)return;const b=s.line.getBoundingClientRect();s.hover=true;s.clientX=e.clientX;s.clientY=e.clientY;s.px=e.clientX-b.left-b.width*.5;s.py=e.clientY-b.bottom+16;request();};
+   const leave=()=>{s.hover=false;};s.line.addEventListener('pointermove',move);s.line.addEventListener('pointerleave',leave);s.line.addEventListener('pointercancel',leave);window.addEventListener('blur',leave);return()=>{s.line.removeEventListener('pointermove',move);s.line.removeEventListener('pointerleave',leave);s.line.removeEventListener('pointercancel',leave);window.removeEventListener('blur',leave);};
   });
   const observer=new IntersectionObserver(([entry])=>{active=entry.isIntersecting;request();});observer.observe(el);media.addEventListener('change',request);document.addEventListener('visibilitychange',request);request();
   return()=>{cancelAnimationFrame(frame);observer.disconnect();listeners.forEach(remove=>remove());media.removeEventListener('change',request);document.removeEventListener('visibilitychange',request);clear();};
  },[paused,lang]);
  return <section ref={root} className="scroll-areas interactive-areas" id="areas" aria-label={lang==='es'?'Mis áreas creativas':'My creative fields'}><span className="eyebrow">{lang==='es'?'DISTINTAS MIRADAS. UNA MISMA CURIOSIDAD.':'DIFFERENT PERSPECTIVES. THE SAME CURIOSITY.'}</span>{rows.map((words,i)=>{
-  const content=words.map((word,j)=><span key={word}><span className="area-word">{word}</span>{j<words.length-1&&<span className="area-separator"> · </span>}</span>);
-  return <div className={`area-line area-line-${i}`} key={i}><div className="area-track"><span className="area-repeat" aria-hidden="true">{content} ✦</span><h2>{content}</h2><span className="area-repeat" aria-hidden="true">✦ {content}</span></div><span className="area-pointer" aria-hidden="true"><svg viewBox="0 0 20 24"><path d="M1 1L17 12 9 14 6 22Z"/></svg><i/></span></div>;
+  const content=words.map((word,j)=><span key={word}><span className="area-word" aria-hidden="true">{Array.from(word).map((char,k)=><span className="area-glyph" data-char={char} key={k}><span className="area-glyph-ink">{char}</span></span>)}</span>{j<words.length-1&&<span className="area-separator"> · </span>}</span>);
+  return <div className={`area-line area-line-${i}`} key={i}><div className="area-track"><span className="area-repeat" aria-hidden="true">{content} ✦</span><h2 aria-label={words.join(' · ')}>{content}</h2><span className="area-repeat" aria-hidden="true">✦ {content}</span></div><span className="area-pointer" aria-hidden="true"><svg viewBox="0 0 20 24"><path d="M1 1L17 12 9 14 6 22Z"/></svg><i/></span></div>;
  })}</section>;
 }
 
