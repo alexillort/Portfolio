@@ -22,9 +22,9 @@ export function InteractiveAreas({lang,paused}:{lang:'es'|'en';paused:boolean}){
  useEffect(()=>{
   const el=root.current;if(!el)return;
   const media=matchMedia('(prefers-reduced-motion:reduce)'),pointer=matchMedia('(hover:hover) and (pointer:fine)');let frame=0,active=false,last=0;
-  const lines=Array.from(el.querySelectorAll<HTMLElement>('.area-line')).map((line,i)=>({line,i,x:0,y:0,px:0,py:0,hover:false,clientX:0,clientY:0,glyphs:Array.from(line.querySelectorAll<HTMLElement>('.area-glyph')).map(glyph=>({glyph,ink:glyph.querySelector<HTMLElement>('.area-glyph-ink')!,weight:400}))}));
+  const lines=Array.from(el.querySelectorAll<HTMLElement>('.area-line')).map((line,i)=>({line,i,x:0,y:0,px:0,py:0,hover:false,clientX:0,clientY:0,glyphs:Array.from(line.querySelectorAll<HTMLElement>('.area-glyph')).map(glyph=>({glyph,ink:glyph.querySelector<HTMLElement>('.area-glyph-ink')!,weight:400,x:0,y:0,space:0}))}));
   const disabled=()=>paused||media.matches;
-  const clear=()=>{el.style.setProperty('--area-shift','0px');lines.forEach(({line,glyphs})=>{line.style.removeProperty('--pointer-x');line.style.removeProperty('--pointer-y');glyphs.forEach(g=>{g.weight=400;g.ink.style.removeProperty('font-weight');});});};
+  const clear=()=>{el.style.setProperty('--area-shift','0px');lines.forEach(({line,glyphs})=>{line.style.removeProperty('--pointer-x');line.style.removeProperty('--pointer-y');glyphs.forEach(g=>{g.weight=400;g.x=0;g.y=0;g.space=0;g.ink.style.removeProperty('font-weight');g.glyph.style.removeProperty('--glyph-space');g.ink.style.removeProperty('--glyph-x');g.ink.style.removeProperty('--glyph-y');});});};
   const draw=(now:number)=>{
    frame=0;if(disabled()){clear();return;}if(!active||document.hidden)return;
    if(now-last>25){last=now;const r=el.getBoundingClientRect(),progress=(innerHeight*.5-r.top-r.height*.5)/(innerHeight+r.height);el.style.setProperty('--area-shift',`${Math.max(-1,Math.min(1,progress))*Math.min(innerWidth*.48,550)}px`);
@@ -32,14 +32,22 @@ export function InteractiveAreas({lang,paused}:{lang:'es'|'en';paused:boolean}){
      const box=s.line.getBoundingClientRect();if(box.bottom<0||box.top>innerHeight)return;
      const tx=s.hover?s.px:Math.sin(now/1900+s.i*1.8)*Math.min(innerWidth*.17,200),ty=s.hover?s.py:Math.cos(now/1500+s.i)*12;
      s.x+=(tx-s.x)*.12;s.y+=(ty-s.y)*.12;s.line.style.setProperty('--pointer-x',`${s.x}px`);s.line.style.setProperty('--pointer-y',`${s.y}px`);
-     // Measure the fixed regular-width glyphs before changing their ink weight.
+     // Variable glyph advances and tracking let the surrounding text reflow gently.
+     // Measure the outer glyph boxes, never the translated ink, to avoid feedback.
      const targets=s.glyphs.map(g=>{
-      if(!s.hover||!pointer.matches)return 400;
-      const b=g.glyph.getBoundingClientRect(),distance=Math.hypot(b.left+b.width/2-s.clientX,(b.top+b.height/2-s.clientY)*1.35);
-      const proximity=Math.max(0,1-distance/190),influence=proximity*proximity*(3-2*proximity);
-      return 400+500*influence;
+      if(!s.hover||!pointer.matches)return {weight:400,x:0,y:0,space:0};
+      const b=g.glyph.getBoundingClientRect(),dx=b.left+b.width/2-s.clientX,dy=b.top+b.height/2-s.clientY;
+      const distance=Math.hypot(dx,dy*1.35),proximity=Math.max(0,1-distance/190),influence=proximity*proximity*(3-2*proximity);
+      return {weight:400+500*influence,x:Math.tanh(dx/65)*b.height*.12*influence,y:-b.height*.13*influence,space:b.height*.018*influence};
      });
-     s.glyphs.forEach((g,i)=>{g.weight+=(targets[i]-g.weight)*.24;if(Math.abs(targets[i]-g.weight)<.5)g.weight=targets[i];g.ink.style.fontWeight=g.weight.toFixed(1);});
+     s.glyphs.forEach((g,i)=>{
+      const t=targets[i];g.weight+=(t.weight-g.weight)*.24;
+      g.x+=(t.x-g.x)*.16;g.y+=(t.y-g.y)*.16;g.space+=(t.space-g.space)*.16;
+      if(Math.abs(t.weight-g.weight)<.5)g.weight=t.weight;
+      if(Math.abs(t.x-g.x)<.01)g.x=t.x;if(Math.abs(t.y-g.y)<.01)g.y=t.y;if(Math.abs(t.space-g.space)<.001)g.space=t.space;
+      g.ink.style.fontWeight=g.weight.toFixed(1);g.glyph.style.setProperty('--glyph-space',`${g.space.toFixed(3)}px`);
+      g.ink.style.setProperty('--glyph-x',`${g.x.toFixed(2)}px`);g.ink.style.setProperty('--glyph-y',`${g.y.toFixed(2)}px`);
+     });
     });
    }
    frame=requestAnimationFrame(draw);
