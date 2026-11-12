@@ -16,6 +16,13 @@
 .intro-glass-wave{opacity:var(--glass-opacity,0);position:absolute;left:var(--glass-x,50%);top:var(--glass-y,40%);width:var(--glass-size,0px);height:var(--glass-size,0px);transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 28% 20%,#ffffff45,transparent 48%),linear-gradient(140deg,#e3ffff14,#fff1fb1a);border:1px solid #ffffffb0;box-shadow:inset 2px 3px 22px #ffffff70,inset -4px -5px 28px #c5d8ee30;backdrop-filter:blur(var(--glass-blur,0px)) saturate(1.18);-webkit-backdrop-filter:blur(var(--glass-blur,0px)) saturate(1.18)}
 .project-card .project-view{left:var(--project-cta-x,50%);top:var(--project-cta-y,50%);pointer-events:none;will-change:left,top}
 .project-card:focus-visible .project-view{left:50%;top:50%}
+.exploration-pointer-action{position:absolute;left:var(--project-cta-x,50%);top:var(--project-cta-y,50%);z-index:3;display:flex;align-items:center;justify-content:center;gap:18px;min-width:156px;padding:18px 24px;border-radius:999px;color:white;background:#ffffff20;border:1px solid #ffffff70;box-shadow:inset 0 1px 0 #ffffff55;backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5);text-shadow:0 1px 8px #0007;font-size:14px;font-weight:400;white-space:nowrap;pointer-events:none;opacity:0;visibility:hidden;transform:translate(-50%,-50%) scale(.9);transition:opacity .18s,transform .18s,visibility .18s}
+.exploration-tile .media-glass-arrow{transition:opacity .18s,transform .4s}
+.exploration-tile:focus-visible{outline:2px solid #75568f;outline-offset:-4px}
+@media(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
+ .exploration-tile[data-pointer-active="true"] .exploration-pointer-action{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}
+ .exploration-tile[data-pointer-active="true"] .media-glass-arrow{opacity:0}
+}
 .motion-paused .intro-scroll-glass{display:none}
 @media(prefers-reduced-motion:reduce){.intro-scroll-glass{display:none}}
 .portrait-aura{width:640px;height:560px;top:9%;opacity:.4}.intro-center{margin-bottom:58px}.intro-center h1{margin-bottom:15px}

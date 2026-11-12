@@ -69,7 +69,7 @@ export function LiquidCursor({paused,dialogOpen}:{paused:boolean;dialogOpen:bool
   };
   const move=(e:PointerEvent)=>{
    if(!enabled()||e.pointerType==='touch')return;
-   if((e.target as Element).closest('.project-visual')?.closest('.project-card')){show=false;el.style.opacity='0';tail.style.opacity='0';return;}
+   if((e.target as Element).closest('.project-visual')?.closest('.project-card')||(e.target as Element).closest('.exploration-tile[data-pointer-active="true"]')){show=false;el.style.opacity='0';tail.style.opacity='0';return;}
    const target=(e.target as Element).closest<HTMLElement>('a,button');let rect=target?.getBoundingClientRect();
    if(rect&&(rect.width>350||rect.height>90)){const pill=target?.querySelector<HTMLElement>('.project-view,.media-glass-arrow');rect=pill?.getBoundingClientRect();}
    attached=!!rect&&rect.width<=350&&rect.height<=90;
@@ -84,31 +84,39 @@ export function LiquidCursor({paused,dialogOpen}:{paused:boolean;dialogOpen:bool
  return <><span ref={trail} className="liquid-cursor-trail" aria-hidden="true"/><div ref={body} className="custom-cursor liquid-cursor" aria-hidden="true"/></>;
 }
 
-// The pill is a pointer follower on desktop and stays centred for keyboard/touch.
+// Desktop followers stay inside their media; exploration retains its corner arrow otherwise.
 export function ProjectHoverActions({paused,revision}:{paused:boolean;revision:string}){
  useEffect(()=>{
   const media=matchMedia('(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference)');
-  const states=Array.from(document.querySelectorAll<HTMLElement>('.project-card')).flatMap(card=>{
-   const visual=card.querySelector<HTMLElement>('.project-visual'),pill=card.querySelector<HTMLElement>('.project-view');
-   return visual&&pill?[{card,visual,pill,x:0,y:0,tx:0,ty:0,frame:0,active:false}]:[];
+  const states=Array.from(document.querySelectorAll<HTMLElement>('.project-card,.exploration-tile')).flatMap(card=>{
+   const exploration=card.matches('.exploration-tile');
+   const visual=exploration?card:card.querySelector<HTMLElement>('.project-visual'),pill=card.querySelector<HTMLElement>(exploration?'.exploration-pointer-action':'.project-view');
+   return visual&&pill?[{card,visual,pill,exploration,x:0,y:0,tx:0,ty:0,clientX:0,clientY:0,frame:0,active:false}]:[];
   });
   const cleanups=states.map(s=>{
-   const reset=()=>{s.active=false;cancelAnimationFrame(s.frame);s.frame=0;s.visual.style.removeProperty('--project-cta-x');s.visual.style.removeProperty('--project-cta-y');};
+   const reset=()=>{s.active=false;cancelAnimationFrame(s.frame);s.frame=0;delete s.card.dataset.pointerActive;s.visual.style.removeProperty('--project-cta-x');s.visual.style.removeProperty('--project-cta-y');};
+   const position=()=>{
+    const r=s.visual.getBoundingClientRect(),mx=Math.min(r.width/2,s.pill.offsetWidth/2+14),my=Math.min(r.height/2,s.pill.offsetHeight/2+14);
+    s.tx=Math.max(mx,Math.min(r.width-mx,s.clientX-r.left));s.ty=Math.max(my,Math.min(r.height-my,s.clientY-r.top));
+   };
    const draw=()=>{
     s.frame=0;if(!s.active)return;
+    if(s.exploration){
+     if(document.hidden||document.elementFromPoint(s.clientX,s.clientY)?.closest('.exploration-tile')!==s.card){reset();return;}
+     position();
+    }
     s.x+=(s.tx-s.x)*.24;s.y+=(s.ty-s.y)*.24;
     s.visual.style.setProperty('--project-cta-x',`${s.x}px`);s.visual.style.setProperty('--project-cta-y',`${s.y}px`);
-    if(Math.abs(s.tx-s.x)+Math.abs(s.ty-s.y)>.2)s.frame=requestAnimationFrame(draw);
+    if(s.exploration||Math.abs(s.tx-s.x)+Math.abs(s.ty-s.y)>.2)s.frame=requestAnimationFrame(draw);
    };
    const move=(e:PointerEvent)=>{
     if(paused||!media.matches||e.pointerType==='touch')return;
-    const r=s.visual.getBoundingClientRect(),mx=Math.min(r.width/2,s.pill.offsetWidth/2+14),my=Math.min(r.height/2,s.pill.offsetHeight/2+14);
-    s.tx=Math.max(mx,Math.min(r.width-mx,e.clientX-r.left));s.ty=Math.max(my,Math.min(r.height-my,e.clientY-r.top));
-    if(!s.active){s.x=s.tx;s.y=s.ty;s.active=true;}if(!s.frame)s.frame=requestAnimationFrame(draw);
+    s.clientX=e.clientX;s.clientY=e.clientY;position();
+    if(!s.active){s.x=s.tx;s.y=s.ty;s.active=true;}s.card.dataset.pointerActive='true';if(!s.frame)s.frame=requestAnimationFrame(draw);
    };
    const focus=()=>{if(s.card.matches(':focus-visible'))reset();};
-   s.visual.addEventListener('pointermove',move);s.card.addEventListener('pointerleave',reset);s.card.addEventListener('focus',focus);media.addEventListener('change',reset);
-   return()=>{reset();s.visual.removeEventListener('pointermove',move);s.card.removeEventListener('pointerleave',reset);s.card.removeEventListener('focus',focus);media.removeEventListener('change',reset);};
+   s.visual.addEventListener('pointermove',move);s.visual.addEventListener('pointerenter',move);s.card.addEventListener('pointerleave',reset);s.card.addEventListener('pointercancel',reset);s.card.addEventListener('focus',focus);media.addEventListener('change',reset);window.addEventListener('blur',reset);document.addEventListener('visibilitychange',reset);
+   return()=>{reset();s.visual.removeEventListener('pointermove',move);s.visual.removeEventListener('pointerenter',move);s.card.removeEventListener('pointerleave',reset);s.card.removeEventListener('pointercancel',reset);s.card.removeEventListener('focus',focus);media.removeEventListener('change',reset);window.removeEventListener('blur',reset);document.removeEventListener('visibilitychange',reset);};
   });
   return()=>cleanups.forEach(cleanup=>cleanup());
  },[paused,revision]);return null;
