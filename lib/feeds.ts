@@ -1,3 +1,4 @@
+import {getGithubProjects} from './github-feed';
 import {projects,profile,type Publication} from './content';
 import snapshot from './publications-snapshot.json';
 const TTL=60*60*1000;
@@ -48,7 +49,7 @@ async function remote(url:string,accept='text/html'){
 let projectCache={items:projects,matched:0,source:'Portfolio archive',updatedAt:snapshot.updatedAt,cached:true};let projectExpiry=0;
 let publicationCache={items:snapshot.items as Publication[],source:'Google Scholar',updatedAt:snapshot.updatedAt,cached:true};let publicationExpiry=0;
 let projectPending:Promise<typeof projectCache>|null=null;let publicationPending:Promise<typeof publicationCache>|null=null;
-export async function getProjects(){
+async function getBehanceProjects(){
  if(Date.now()<projectExpiry)return projectCache;
  if(projectPending)return projectPending;
  projectPending=(async()=>{try{let data;try{data=parseBehance(await remote(profile.behance+'.xml','*/*'));}catch{data=parseBehanceProfile(await remote(profile.behance));}projectCache={...data,source:'Behance',updatedAt:new Date().toISOString(),cached:false};projectExpiry=Date.now()+TTL;}catch(error){console.warn('Behance refresh:',error instanceof Error?error.message:'unavailable');projectCache={...projectCache,cached:true};projectExpiry=Date.now()+5*60*1000;}return projectCache;})();
@@ -75,3 +76,5 @@ export async function getPublications(){
   }return publicationCache;
  })();try{return await publicationPending;}finally{publicationPending=null;}
 }
+
+export async function getProjects(){const [behance,github]=await Promise.all([getBehanceProjects(),getGithubProjects()]);return {...behance,items:[...github,...behance.items],source:github.length?'GitHub + '+behance.source:behance.source};}

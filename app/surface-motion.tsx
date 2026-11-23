@@ -11,7 +11,7 @@ export function SurfaceMotion({paused,revision}:{paused:boolean;revision:string}
   const media=matchMedia('(prefers-reduced-motion:reduce)');let stopped=false,frame=0,lastY=scrollY,lastTime=performance.now(),energy=0;
   const surfaces:Surface[]=[];
   document.querySelectorAll<HTMLElement>('.scroll-media').forEach(el=>{
-   const image=el.querySelector('img'),canvas=el.querySelector('canvas');if(!image||!canvas)return;const ctx=canvas.getContext('2d',{alpha:true});if(!ctx)return;
+   if(el.closest('[class*="visual-github-"]'))return;const image=el.querySelector('img'),canvas=el.querySelector('canvas');if(!image||!canvas)return;const ctx=canvas.getContext('2d',{alpha:true});if(!ctx)return;
    surfaces.push({el,image,canvas,ctx,active:false,started:0,ready:false,lastWidth:0,lastHeight:0});
   });
   const disabled=()=>paused||media.matches;

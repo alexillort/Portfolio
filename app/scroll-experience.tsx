@@ -1,5 +1,6 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
+import SafeImage from './safe-image';
 import useEmblaCarousel from 'embla-carousel-react';
 import {ArrowDown,ArrowUpRight,ArrowLeft,ArrowRight,Pause,Play} from 'lucide-react';
 import {IntroPortrait,InteractiveAreas} from './interactive-details';
@@ -18,7 +19,7 @@ export function CenteredIntro({lang,paused}:{lang:Lang;paused:boolean}){
 }
 export function ScrollAreas({lang,paused}:{lang:Lang;paused:boolean}){return <InteractiveAreas lang={lang} paused={paused}/>;}
 export function ScrollMedia({src,fallbackSrc,alt}:{src:string;fallbackSrc?:string;alt:string}){
- return <div className="scroll-media"><canvas aria-hidden="true"/><img src={src} alt={alt} loading="lazy" onError={e=>{if(fallbackSrc&&e.currentTarget.getAttribute('src')!==fallbackSrc)e.currentTarget.src=fallbackSrc;}}/></div>;
+ return <div className="scroll-media"><canvas aria-hidden="true"/><SafeImage src={src} fallbackSrc={fallbackSrc} alt={alt} loading="lazy"/></div>;
 }
 export function Exploration({lang,paused}:{lang:Lang;paused:boolean}){
  const es=lang==='es';

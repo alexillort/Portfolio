@@ -65,3 +65,7 @@
  .interactive-areas .area-track,.interactive-areas .area-line:nth-of-type(even) .area-track{left:0;width:100%;transform:none;white-space:normal;text-align:center;justify-content:center;padding-inline:var(--gutter)}
  .interactive-areas .area-repeat{display:none}.interactive-areas .area-word{transform:none!important;transition:none}
 }
+
+.project-visual[class*='visual-github-'] .scroll-media{background:#fff}.project-visual[class*='visual-github-'] .scroll-media img{object-fit:contain;background:#fff}
+
+.project-visual[class*='visual-github-'] .scroll-media canvas{display:none}.project-visual[class*='visual-github-'] .scroll-media img{opacity:1!important}
