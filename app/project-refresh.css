@@ -17,3 +17,5 @@
 @media(max-width:420px){.page-work .work-full .github-grid{grid-template-columns:1fr;max-width:330px}.github-grid .github-art-title{font-size:32px}.github-grid .github-art-label{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.selected-rotation{animation:none}.code-discipline{position:relative;top:auto}}
 .motion-paused .selected-rotation{animation:none}
+.project-card .project-view{white-space:nowrap;flex-wrap:nowrap;width:max-content;max-width:calc(100% - 24px)}
+.project-card .project-view svg{flex-shrink:0}
