@@ -3,6 +3,7 @@ import './globals.css';
 import './motion-revision.css';
 import './glass-revision.css';
 import './interaction-revision.css';
+import './project-refresh.css';
 import ExperienceMotion from './experience-motion';
 export const metadata: Metadata = {
  title: '.ART — Alexander Rozo Torres',
