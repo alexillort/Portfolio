@@ -6,6 +6,6 @@ export function mapGithubProjects(repos:unknown):Project[]{
  const terms=[r.name,...(Array.isArray(r.topics)?r.topics:[])].join(' ').toLowerCase();
  const category=/research|bibtex|emotion|hci|vtk/.test(terms)?'Research':/xr|vr|ar3d|quest|meta-homes/.test(terms)?'XR':/generative|3d|motion|animation/.test(terms)?'Motion':/ux|ui|design|portfolio|font/.test(terms)?'UX/UI':'Development';
  const fallback={es:'Repositorio público de '+githubUser+'.',en:'Public repository by '+githubUser+'.'};
- return {id:'github-'+r.id,title:r.name.replace(/[-_]/g,' '),category,image:'https://opengraph.githubassets.com/portfolio/'+githubUser+'/'+r.name,url:'https://github.com/'+githubUser+'/'+r.name,source:r.fork?'GitHub · Fork':'GitHub',description:{es:r.description||fallback.es,en:r.description||fallback.en}};
+ return {id:'github-'+r.id,title:r.name.replace(/[-_]/g,' '),category,image:'https://opengraph.githubassets.com/portfolio/'+githubUser+'/'+r.name,url:r.has_pages?('https://'+githubUser+'.github.io/'+(r.name.toLowerCase()===githubUser+'.github.io'?'':encodeURIComponent(r.name)+'/')):'https://github.com/'+githubUser+'/'+r.name,source:r.has_pages?'GitHub Pages':r.fork?'GitHub · Fork':'GitHub',description:{es:r.description||fallback.es,en:r.description||fallback.en}};
  });
 }
